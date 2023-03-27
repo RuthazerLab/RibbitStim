@@ -16,6 +16,11 @@ Notes
 *If the program shows "Capture initiated" but capture does not start in
 ThorImage, refer to triggertest.m for troubleshooting
 
+
+Versions
+2023.3.27
+Change fade: fade the loom circle (instead of drawing rectangle & fading)
+
 %}
 
 
@@ -42,7 +47,7 @@ ylim = 100;
 xwidth = 200;
 ywidth = 200;
 
-fullscreen = 1;     %when set to 1, stimulus dots run in full screen range (overrides screen limit values)
+fullscreen = 0;     %when set to 1, stimulus dots run in full screen range (overrides screen limit values)
 
 
 %------end of setting vars----------
@@ -71,8 +76,8 @@ fprintf(logtxt,[message '\n']);
 message=sprintf(['Fade duration = ' num2str(fadeDur) ' secs']);
 disp(message);
 fprintf(logtxt,[message '\n']);
-    
-   
+
+
 %PTB startup
 Screen('Preference', 'Verbosity', 0);
 Screen('Preference', 'SuppressAllWarnings', 0);
@@ -163,14 +168,14 @@ pause(isi);
 ovalcenter_x = xlim+xwidth/2;
 ovalcenter_y = ylim+ywidth/2;
 
-baseRect = [xlim ylim xlim+xwidth ylim+ywidth];
+baseRect = windowRect;
 centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 
 
 for currepeat = 1:repeats
     for currstim = 1:nstims
         
-        dataindex = currstim + nstims*(currepeat-1);       
+        dataindex = currstim + nstims*(currepeat-1);
         
         toctime = toc(start);
         stimtimes(dataindex,1) = toctime;
@@ -205,7 +210,7 @@ for currepeat = 1:repeats
             else
                 ovalRad = expandRV * screenmaxpixels / (collisionTime - elapsedTime);
             end
-
+            
             
             %if the updated oval size exceeds the designated display area, show a
             %black screen
@@ -217,20 +222,27 @@ for currepeat = 1:repeats
         
         toctime = toc(start);
         stimtimes(dataindex,2) = toctime;
-                
+        
         if fadeDur>0
             message=sprintf(['[' num2str(toctime) ']: Fade']);
             disp(message);
             fprintf(logtxt,[message '\n']);
+            
+            ovalRect = [0 0 ovalRad ovalRad];
+            centeredOval = CenterRectOnPointd(ovalRect, ovalcenter_x, ovalcenter_y);
             
             t1 = tic;
             elapsedTime2 = toc(t1);
             while elapsedTime2 <= fadeDur
                 
                 rectcolor = (elapsedTime2/fadeDur)*(white-black);
-                Screen('FillRect', window, rectcolor, centeredRect);
+                Screen('FillRect', window, bgcolor, centeredRect);
+                Screen('FillOval', window, rectcolor,centeredOval);
+                %Screen('FillRect', window, rectcolor, centeredRect);
                 Screen('DrawingFinished', window);
+                
                 vbl=Screen('Flip', window, vbl + (waitframes-0.5)*ifi);
+                elapsedTime2 = toc(t1);
                 elapsedTime2 = toc(t1);
                 
             end
@@ -239,7 +251,7 @@ for currepeat = 1:repeats
         toctime = toc(start);
         message=sprintf(['[' num2str(toctime) ']: End presentation']);
         disp(message);
-        fprintf(logtxt,[message '\n']);       
+        fprintf(logtxt,[message '\n']);
         
         %isi: display white screen
         Screen('FillRect', window, white ,centeredRect);
@@ -249,11 +261,11 @@ for currepeat = 1:repeats
         
     end
     
-        
+    
     %add blank presentation
     if addblank
         toctime = toc(start);
-        blanktimes(currepeat,1) = toctime;        
+        blanktimes(currepeat,1) = toctime;
         message=sprintf(['[' num2str(toctime) ']: Blank']);
         disp(message);
         fprintf(logtxt,[message '\n']);
@@ -264,7 +276,7 @@ for currepeat = 1:repeats
         blanktimes(currepeat,2) = toctime;
         message=sprintf(['[' num2str(toctime) ']: Blank end']);
         disp(message);
-        fprintf(logtxt,[message '\n']);   
+        fprintf(logtxt,[message '\n']);
         
         pause(isi);
         

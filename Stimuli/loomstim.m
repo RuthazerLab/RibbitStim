@@ -14,6 +14,11 @@ If the program is terminated unusually, you may get stuck on an open PTB display
 and unable to return to Matlab.
 if this happens, press ALT+TAB or close PTB display window from taskbar (right click Matlab icon to display all open tabs)
 
+
+Versions
+2023.3.27
+Change fade: fade the loom circle (instead of drawing rectangle & fading)
+
 %}
 
 clearvars;
@@ -37,7 +42,7 @@ ylim = 100;
 xwidth = 200;
 ywidth = 200;
 
-fullscreen = 1;     %when set to 1, stimulus dots run in full screen range (overrides screen limit values)
+fullscreen = 0;     %when set to 1, stimulus dots run in full screen range (overrides screen limit values)
 
 
 
@@ -84,7 +89,7 @@ ovalcenter_x = xlim+xwidth/2;
 ovalcenter_y = ylim+ywidth/2;
 ovalRad = 0;
 
-baseRect = [xlim ylim xlim+xwidth ylim+ywidth];
+baseRect = windowRect;
 centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 
 %display and update circle
@@ -132,11 +137,19 @@ t1 = tic;
 elapsedTime2 = toc(t1);
 
 if fadeDur>0
+            
+    ovalRect = [0 0 ovalRad ovalRad];
+    centeredOval = CenterRectOnPointd(ovalRect, ovalcenter_x, ovalcenter_y);
+
+    
     while elapsedTime2 <= fadeDur
         
         rectcolor = (elapsedTime2/fadeDur)*(white-black);
-        Screen('FillRect', window, rectcolor, centeredRect);
+        Screen('FillRect', window, bgcolor, centeredRect);
+        Screen('FillOval', window, rectcolor,centeredOval);
+        %Screen('FillRect', window, rectcolor, centeredRect);
         Screen('DrawingFinished', window);
+        
         vbl=Screen('Flip', window, vbl + (waitframes-0.5)*ifi);
         elapsedTime2 = toc(t1);
         
